@@ -35,7 +35,7 @@
     show: pad.with(x: 1cm)
     set text(fill: self.colors.neutral-light, size: 12pt)
     grid(
-      columns: (1fr, 1fr, 1fr),
+      columns: (1fr, 4fr, 1fr),
       align: (left, center, right),
       self.store.datum,
       utils.call-or-display(self, self.store.footer),

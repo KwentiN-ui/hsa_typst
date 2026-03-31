@@ -21,7 +21,8 @@
 #title-slide()
 
 // Inhaltsverzeichnis
-#components.adaptive-columns(outline(indent: 1em))
+#heading([Inhalt], depth: 1, outlined: false, numbering: none)
+#components.adaptive-columns(outline(indent: 1em, title: none))
 
 = Einführung
 
