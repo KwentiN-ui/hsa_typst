@@ -14,14 +14,55 @@
     v(0.3cm)
     show: pad.with(1cm)
     set align(horizon)
-    set text(fill: self.colors.primary, size: 12pt, font: "Arial")
+    set text(fill: self.colors.primary, size: 12pt, font: "Montserrat")
     [| #self.store.header]
     h(1fr)
     box(image("logo_full.svg", height: 1.5cm), baseline: 50%)
     linebreak()
 
+    // Breadcrumbs (übergeordnete Kapitel)
+    context {
+      let current-page = here().page()
+      let hs = query(selector(heading))
+      let hs-before = hs.filter(h => h.location().page() <= current-page)
+
+      let slide-headings = hs-before.filter(h => h.level <= self.slide-level)
+      let slide-heading = if slide-headings.len() > 0 { slide-headings.last() } else { none }
+
+      let levels = ()
+      if slide-heading != none {
+        let current-level = slide-heading.level
+        let found-slide-heading = false
+
+        for h in hs-before.rev() {
+          if not found-slide-heading {
+            if h.location() == slide-heading.location() {
+              found-slide-heading = true
+            }
+            continue
+          }
+
+          if h.level < current-level {
+            levels.insert(0, h.body)
+            current-level = h.level
+          }
+          if current-level <= 1 {
+            break
+          }
+        }
+      }
+
+      if levels.len() > 0 {
+        v(-0.5cm)
+        set text(fill: self.colors.neutral.lighten(50%), size: 12pt, weight: "regular")
+        levels.join([ #sym.space #sym.dash.en #sym.space ])
+        v(-0.8cm)
+        linebreak()
+      }
+    }
+
     set text(fill: self.colors.neutral, size: 25pt, weight: "bold")
-    utils.display-current-heading()
+    utils.display-current-heading(depth: self.slide-level)
   }
   // Footer definieren
   let footer(self) = {
@@ -145,6 +186,7 @@
     ),
     config-common(
       slide-fn: slide,
+      slide-level: 4,
     ),
     config-colors(
       primary: rgb("#13017C"),
