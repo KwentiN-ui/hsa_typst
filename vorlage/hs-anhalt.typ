@@ -143,18 +143,25 @@
   }
 
   let body(self) = {
-    pad(top: 4cm, bottom: 2cm, left: 1.5cm, right: 1.5cm)[
-      #align(top + left)[
-        #text(size: 2.2em, weight: "bold", fill: self.colors.neutral-light, info.title)
-      ]
-      #align(bottom + right)[
-        // Autoren
-        #set text(size: 1.5em, fill: self.colors.neutral-light)
-        #stack(
-          dir: ttb,
-          spacing: 0.4em, // Vertikaler Abstand zwischen den Namen
-          ..info.authors, // Fügt alle Autoren als einzelne Elemente hinzu
-        )
+    pad(top: 1.5cm, bottom: 1cm, left: 1.5cm, right: 1.5cm)[
+      #box(width: 100%, height: 100%)[
+        #place(top + left)[
+          #text(size: 2.5em, weight: "bold", fill: self.colors.neutral-light, info.title)
+          #if info.subtitle != none {
+            linebreak()
+            v(0.2cm)
+            text(size: 1.5em, weight: "regular", fill: self.colors.neutral-light, info.subtitle)
+          }
+        ]
+        #place(bottom + right)[
+          // Autoren
+          #set text(size: 1.2em, fill: self.colors.neutral-light)
+          #stack(
+            dir: ttb,
+            spacing: 0.3em, // Vertikaler Abstand zwischen den Namen
+            ..info.authors, // Fügt alle Autoren als einzelne Elemente hinzu
+          )
+        ]
       ]
     ]
   }
