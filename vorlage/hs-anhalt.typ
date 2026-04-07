@@ -1,99 +1,117 @@
 #import "@preview/touying:0.7.0": *
 
+#let hsa-header(self) = {
+  set align(top)
+  v(0.3cm)
+  show: pad.with(x: 1cm, top: 1cm, bottom: 0cm)
+  set align(horizon)
+  set text(fill: self.colors.primary, size: 12pt, font: "Montserrat")
+  [| #self.store.header]
+  h(1fr)
+  box(image("logo_full.svg", height: 1.5cm), baseline: 50%)
+  linebreak()
+
+  // Breadcrumbs (übergeordnete Kapitel)
+  context {
+    let current-page = here().page()
+    let hs = query(selector(heading))
+    let hs-before = hs.filter(h => h.location().page() <= current-page)
+
+    let slide-headings = hs-before.filter(h => h.level <= self.slide-level)
+    let slide-heading = if slide-headings.len() > 0 { slide-headings.last() } else { none }
+
+    let levels = ()
+    if slide-heading != none {
+      let current-level = slide-heading.level
+      let found-slide-heading = false
+
+      for h in hs-before.rev() {
+        if not found-slide-heading {
+          if h.location() == slide-heading.location() {
+            found-slide-heading = true
+          }
+          continue
+        }
+
+        if h.level < current-level {
+          levels.insert(0, h.body)
+          current-level = h.level
+        }
+        if current-level <= 1 {
+          break
+        }
+      }
+    }
+
+    let breadcrumbs = if levels.len() > 0 {
+      set text(fill: self.colors.neutral.lighten(50%), size: 12pt, weight: "regular")
+      levels.join([ #sym.space #sym.dash.en #sym.space ])
+    } else {
+      hide[A]
+    }
+    v(-0.5cm)
+    breadcrumbs
+    v(-0.8cm)
+    linebreak()
+  }
+
+  set text(fill: self.colors.neutral, size: 25pt, weight: "bold")
+  context {
+    if self.store.title != none {
+      self.store.title
+    } else {
+      utils.display-current-heading(depth: self.slide-level)
+    }
+  }
+}
+
+#let hsa-footer(self) = {
+  set align(alignment.horizon)
+  show: components.cell.with(fill: gradient.linear(
+    self.colors.secondary,
+    self.colors.secondary,
+    self.colors.primary,
+    angle: 5deg,
+  ))
+  show: pad.with(x: 1cm)
+  set text(fill: self.colors.neutral-light, size: 12pt)
+  grid(
+    columns: (1fr, 4fr, 1fr),
+    align: (left, center, right),
+    self.store.datum, utils.call-or-display(self, self.store.footer), "Seite " + context utils.slide-counter.display(),
+  )
+}
+
 #let slide(title: auto, ..args) = touying-slide-wrapper(self => {
-  if title != auto {
-    self.store.title = title
+  let args-named = args.named()
+  // Titel extrahieren und im Store speichern, falls vorhanden
+  let actual-title = if title != auto { title } else { args-named.at("title", default: none) }
+
+  if actual-title != none {
+    self.store.title = actual-title
+  } else {
+    self.store.title = none
+  }
+
+  // Titel aus den named args entfernen, damit touying-slide ihn nicht im Body rendert
+  let named = (:)
+  for (k, v) in args.named() {
+    if k != "title" {
+      named.insert(k, v)
+    }
   }
 
   // Linkfarbe setzen
   show link: set text(fill: rgb(255, 0, 0))
 
-  // Header definieren
-  let header(self) = {
-    set align(top)
-    v(0.3cm)
-    show: pad.with(x: 1cm, top: 1cm, bottom: 0cm)
-    set align(horizon)
-    set text(fill: self.colors.primary, size: 12pt, font: "Montserrat")
-    [| #self.store.header]
-    h(1fr)
-    box(image("logo_full.svg", height: 1.5cm), baseline: 50%)
-    linebreak()
-
-    // Breadcrumbs (übergeordnete Kapitel)
-    context {
-      let current-page = here().page()
-      let hs = query(selector(heading))
-      let hs-before = hs.filter(h => h.location().page() <= current-page)
-
-      let slide-headings = hs-before.filter(h => h.level <= self.slide-level)
-      let slide-heading = if slide-headings.len() > 0 { slide-headings.last() } else { none }
-
-      let levels = ()
-      if slide-heading != none {
-        let current-level = slide-heading.level
-        let found-slide-heading = false
-
-        for h in hs-before.rev() {
-          if not found-slide-heading {
-            if h.location() == slide-heading.location() {
-              found-slide-heading = true
-            }
-            continue
-          }
-
-          if h.level < current-level {
-            levels.insert(0, h.body)
-            current-level = h.level
-          }
-          if current-level <= 1 {
-            break
-          }
-        }
-      }
-
-      let breadcrumbs = if levels.len() > 0 {
-        set text(fill: self.colors.neutral.lighten(50%), size: 12pt, weight: "regular")
-        levels.join([ #sym.space #sym.dash.en #sym.space ])
-      } else {
-        hide[A]
-      }
-      v(-0.5cm)
-      breadcrumbs
-      v(-0.8cm)
-      linebreak()
-    }
-
-    set text(fill: self.colors.neutral, size: 25pt, weight: "bold")
-    utils.display-current-heading(depth: self.slide-level)
-  }
-  // Footer definieren
-  let footer(self) = {
-    set align(alignment.horizon)
-    show: components.cell.with(fill: gradient.linear(
-      self.colors.secondary,
-      self.colors.secondary,
-      self.colors.primary,
-      angle: 5deg,
-    ))
-    show: pad.with(x: 1cm)
-    set text(fill: self.colors.neutral-light, size: 12pt)
-    grid(
-      columns: (1fr, 4fr, 1fr),
-      align: (left, center, right),
-      self.store.datum,
-      utils.call-or-display(self, self.store.footer),
-      "Seite " + context utils.slide-counter.display(),
-    )
-  }
   self = utils.merge-dicts(
     self,
     config-page(
-      header: header,
-      footer: footer,
+      header: hsa-header,
+      footer: hsa-footer,
     ),
   )
-  touying-slide(self: self, ..args)
+  touying-slide(self: self, ..named, ..args.pos())
 })
 
 #let title-slide(
@@ -172,6 +190,8 @@
   touying-slide(self: self, body(self))
 })
 
+#let cited-on-page = state("cited-on-page", (:))
+
 #let hsa-theme(
   aspect-ratio: "16-9",
   header: [Funktion, Fachbereich, Struktureinheit oder Name],
@@ -198,7 +218,46 @@
 
   show footnote.entry: set text(size: 10pt)
 
-  show: magic.bibliography-as-footnote.with(bibliography(title: none, bibliographie_path))
+  // Custom cite rule for consistent global numbering and footnotes on every slide
+  show cite.where(form: "normal"): it => {
+    if not it.has("key") { return it }
+    context {
+      let page-id = str(here().page())
+      let key = str(it.key)
+      let cited = cited-on-page.get()
+      let slide-citations = cited.at(page-id, default: ())
+      if not slide-citations.contains(key) {
+        // Nur die Fußnote zurückgeben. Der Marker ist standardmäßig hochgestellt/klein.
+        footnote(numbering: _ => it)[
+          #show regex("^\[\d+\]\s"): none
+          #cite(it.key, form: "full")
+        ]
+        cited-on-page.update(c => {
+          let l = c.at(page-id, default: ())
+          l.push(key)
+          c.insert(page-id, l)
+          c
+        })
+      } else {
+        // Folgevorkommen auf derselben Folie ebenfalls klein/hochgestellt
+        super(it)
+      }
+    }
+  }
+
+  // Fußnoten-Einträge im Footer für bessere Ausrichtung anpassen
+  show footnote.entry: it => {
+    let loc = it.note.location()
+    context {
+      let num = numbering(it.note.numbering, ..counter(footnote).at(loc))
+      grid(
+        columns: (2.5em, 1fr),
+        column-gutter: 0.2em,
+        num, it.note.body,
+      )
+    }
+  }
+
   show: touying-slides.with(
     config-page(
       paper: "presentation-" + aspect-ratio,
@@ -231,5 +290,12 @@
 
   body
 
-  place(hide(bibliography(bibliographie_path, title: none)))
+  if bibliographie_path != none {
+    // Bibliographie-Folie mit Titel für den Header
+    slide(title: [Literatur])[
+      #hide(heading(level: 1, numbering: none, outlined: false)[Literatur])
+      #set text(size: 12pt)
+      #bibliography(bibliographie_path, title: none, style: "ieee")
+    ]
+  }
 }
