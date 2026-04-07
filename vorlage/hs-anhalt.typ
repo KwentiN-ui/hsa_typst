@@ -1,4 +1,4 @@
-#import "@preview/touying:0.6.1": *
+#import "@preview/touying:0.7.0": *
 
 #let slide(title: auto, ..args) = touying-slide-wrapper(self => {
   if title != auto {
@@ -12,7 +12,7 @@
   let header(self) = {
     set align(top)
     v(0.3cm)
-    show: pad.with(1cm)
+    show: pad.with(x: 1cm, top: 1cm, bottom: 0cm)
     set align(horizon)
     set text(fill: self.colors.primary, size: 12pt, font: "Montserrat")
     [| #self.store.header]
@@ -52,13 +52,16 @@
         }
       }
 
-      if levels.len() > 0 {
-        v(-0.5cm)
+      let breadcrumbs = if levels.len() > 0 {
         set text(fill: self.colors.neutral.lighten(50%), size: 12pt, weight: "regular")
         levels.join([ #sym.space #sym.dash.en #sym.space ])
-        v(-0.8cm)
-        linebreak()
+      } else {
+        hide[A]
       }
+      v(-0.5cm)
+      breadcrumbs
+      v(-0.8cm)
+      linebreak()
     }
 
     set text(fill: self.colors.neutral, size: 25pt, weight: "bold")
@@ -105,7 +108,7 @@
       #v(0.3cm)
       #show: pad.with(left: 1cm, right: 1cm)
       #set align(horizon)
-      #set text(fill: self.colors.primary, size: 12pt, font: "Arial")
+      #set text(fill: self.colors.primary, size: 12pt, font: "Montserrat")
       | #self.store.header
       #h(1fr)
       #box(image("logo_full.svg", height: 1.5cm), baseline: 50%)
@@ -169,23 +172,38 @@
   touying-slide(self: self, body(self))
 })
 
-// TODO: Title-slide für Zwischenabschnitte erstellen
-
 #let hsa-theme(
   aspect-ratio: "16-9",
   header: [Funktion, Fachbereich, Struktureinheit oder Name],
   footer: [Name, Anlass],
   datum: [#datetime.today().display("[day].[month].[year]")],
+  bibliographie_path: "../bibliographie.bib",
   ..args,
   body,
 ) = {
-  set text(size: 20pt, font: "Montserrat")
+  set text(size: 18pt, font: "Montserrat", lang: "de")
+  show figure.caption: set text(size: 14pt)
 
+  // Code
+  show raw: set text(font: "JetBrains Mono")
+
+  show raw.where(block: true): it => block(
+    fill: rgb("#f5f3fc"), // Ganz leichtes Grau als Hintergrund
+    inset: (left: 10pt, y: 8pt, right: 8pt), // Innenabstand
+    radius: (left: 0pt, right: 3pt), // Nur rechts abgerundet
+    stroke: (left: 1.5pt + rgb("#2B347A")),
+    width: 100%,
+    it,
+  )
+
+  show footnote.entry: set text(size: 10pt)
+
+  show: magic.bibliography-as-footnote.with(bibliography(title: none, bibliographie_path))
   show: touying-slides.with(
     config-page(
       paper: "presentation-" + aspect-ratio,
       margin: (
-        top: 4cm, // Platz für den Header
+        top: 4.5cm, // Platz für den Header
         bottom: 1.2cm, // Platz für den Footer
         left: 1cm, // Horizontaler Rand
         right: 1cm, // Horizontaler Rand
@@ -212,4 +230,6 @@
   )
 
   body
+
+  place(hide(bibliography(bibliographie_path, title: none)))
 }
