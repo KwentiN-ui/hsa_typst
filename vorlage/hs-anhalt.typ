@@ -203,6 +203,7 @@
 ) = {
   set text(size: 18pt, font: "Montserrat", lang: "de")
   show figure.caption: set text(size: 14pt)
+  set figure(numbering: none)
 
   // Code
   show raw: set text(font: "JetBrains Mono")
