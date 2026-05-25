@@ -69,7 +69,3 @@ Fourth
 
 == weitere
 Fortgeschrittenere Animationen gibt es in der #link("https://touying-typ.github.io/docs/dynamic/complex", [Touying Dokumentation])
-
-= Quellen
-// Full:false setzen um nur verwendete Quellen einzublenden
-#bibliography("bibliographie.bib", full: true, title: none)
