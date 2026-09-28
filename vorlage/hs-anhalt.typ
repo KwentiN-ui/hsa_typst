@@ -1,4 +1,4 @@
-#import "@preview/touying:0.7.0": *
+#import "@preview/touying:0.8.0": *
 
 #let hsa-header(self) = {
   set align(top)
@@ -190,14 +190,13 @@
   touying-slide(self: self, body(self))
 })
 
-#let cited-on-page = state("cited-on-page", (:))
 
 #let hsa-theme(
   aspect-ratio: "16-9",
   header: [Funktion, Fachbereich, Struktureinheit oder Name],
   footer: [Name, Anlass],
   datum: [#datetime.today().display("[day].[month].[year]")],
-  bibliographie_path: "../bibliographie.bib",
+  bibliographie_path: "../zotero.bib",
   ..args,
   body,
 ) = {
@@ -206,7 +205,7 @@
   set figure(numbering: none)
 
   // Code
-  show raw: set text(font: "JetBrains Mono")
+  // show raw: set text(font: "JetBrains Mono")
 
   show raw.where(block: true): it => block(
     fill: rgb("#f5f3fc"), // Ganz leichtes Grau als Hintergrund
@@ -217,53 +216,11 @@
     it,
   )
 
-  show footnote.entry: set text(size: 10pt)
-
-  // Custom cite rule for consistent global numbering and footnotes on every slide
-  show cite.where(form: "normal"): it => {
-    if not it.has("key") { return it }
-    context {
-      let page-id = str(here().page())
-      let key = str(it.key)
-      let cited = cited-on-page.get()
-      let slide-citations = cited.at(page-id, default: ())
-      if not slide-citations.contains(key) {
-        // Nur die Fußnote zurückgeben. Der Marker ist standardmäßig hochgestellt/klein.
-        footnote(numbering: _ => it)[
-          #show regex("^\[\d+\]\s"): none
-          #cite(it.key, form: "full")
-        ]
-        cited-on-page.update(c => {
-          let l = c.at(page-id, default: ())
-          l.push(key)
-          c.insert(page-id, l)
-          c
-        })
-      } else {
-        // Folgevorkommen auf derselben Folie ebenfalls klein/hochgestellt
-        super(it)
-      }
-    }
-  }
-
-  // Fußnoten-Einträge im Footer für bessere Ausrichtung anpassen
-  show footnote.entry: it => {
-    let loc = it.note.location()
-    context {
-      let num = numbering(it.note.numbering, ..counter(footnote).at(loc))
-      grid(
-        columns: (2.5em, 1fr),
-        column-gutter: 0.2em,
-        num, it.note.body,
-      )
-    }
-  }
-
   show: touying-slides.with(
     config-page(
       paper: "presentation-" + aspect-ratio,
       margin: (
-        top: 4.5cm, // Platz für den Header
+        top: 3.8cm, // Platz für den Header
         bottom: 1.2cm, // Platz für den Footer
         left: 1cm, // Horizontaler Rand
         right: 1cm, // Horizontaler Rand
