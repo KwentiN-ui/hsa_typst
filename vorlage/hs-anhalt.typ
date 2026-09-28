@@ -198,7 +198,7 @@
   let subtitle = named.at("subtitle", default: auto)
   let numbered = named.at("numbered", default: true)
   let title = named.at("title", default: auto)
-  let blau = named.at("blau", default: auto)
+  let blau = named.at("blau", default: true)
   let config = named.at("config", default: (:))
 
   // Positional argument if passed manually (and not none)
@@ -235,19 +235,11 @@
     ]
   }
 
-  let title-background(self) = context {
-    let is-blue = if blau != auto {
-      blau
-    } else {
-      let current-page = here().page()
-      let all-h1 = query(heading.where(level: 1, outlined: true))
-      let past-h1 = all-h1.filter(h => h.location().page() <= current-page and h.numbering != none)
-      calc.odd(past-h1.len())
-    }
+  let title-background(self) = {
     rect(
       width: 100%,
       height: 100%,
-      fill: if is-blue { self.colors.primary } else { self.colors.secondary },
+      fill: if blau == false { self.colors.secondary } else { self.colors.primary },
     )
   }
 
