@@ -190,6 +190,147 @@
   touying-slide(self: self, body(self))
 })
 
+#let zwischentitel-slide(
+  ..args,
+) = touying-slide-wrapper(self => {
+  let pos = args.pos()
+  let named = args.named()
+  let subtitle = named.at("subtitle", default: auto)
+  let numbered = named.at("numbered", default: true)
+  let title = named.at("title", default: auto)
+  let blau = named.at("blau", default: auto)
+  let config = named.at("config", default: (:))
+
+  // Positional argument if passed manually (and not none)
+  if pos.len() > 0 and pos.first() != none and subtitle == auto {
+    subtitle = pos.first()
+  }
+
+  // Heading check if called via Touying's new-section-slide-fn
+  let current-heading = if "headings" in self and self.headings.len() > 0 {
+    self.headings.last()
+  } else {
+    none
+  }
+  if current-heading != none {
+    let outlined = current-heading.at("outlined", default: true)
+    let numbering = current-heading.at("numbering", default: auto)
+    if not outlined or numbering == none {
+      return none
+    }
+  }
+
+  // Title Header
+  let title-header(self) = {
+    set align(top)
+    rect(width: 100%, fill: self.colors.neutral-light)[
+      #v(0.3cm)
+      #show: pad.with(left: 1cm, right: 1cm)
+      #set align(horizon)
+      #set text(fill: self.colors.primary, size: 12pt, font: "Montserrat")
+      | #self.store.header
+      #h(1fr)
+      #box(image("logo_full.svg", height: 1.5cm), baseline: 50%)
+      #v(.4cm)
+    ]
+  }
+
+  let title-background(self) = context {
+    let is-blue = if blau != auto {
+      blau
+    } else {
+      let current-page = here().page()
+      let all-h1 = query(heading.where(level: 1, outlined: true))
+      let past-h1 = all-h1.filter(h => h.location().page() <= current-page and h.numbering != none)
+      calc.odd(past-h1.len())
+    }
+    rect(
+      width: 100%,
+      height: 100%,
+      fill: if is-blue { self.colors.primary } else { self.colors.secondary },
+    )
+  }
+
+  self = utils.merge-dicts(
+    self,
+    config,
+    config-common(freeze-slide-counter: true),
+    config-page(
+      background: title-background(self),
+      header: title-header(self),
+      footer: none,
+    ),
+  )
+
+  let info = self.info + named
+  info.authors = {
+    let authors = if "authors" in info { info.authors } else { info.author }
+    if type(authors) == array { authors } else { (authors,) }
+  }
+
+  let body(self) = {
+    pad(top: 1.5cm, bottom: 1cm, left: 1.5cm, right: 1.5cm)[
+      #box(width: 100%, height: 100%)[
+        #place(top + left)[
+          #text(size: 2.5em, weight: "bold", fill: self.colors.neutral-light)[
+            #if title != auto {
+              title
+            } else {
+              utils.display-current-heading(level: 1, numbered: numbered)
+            }
+          ]
+          #context {
+            let sub-content = if subtitle != auto {
+              subtitle
+            } else {
+              let current-page = here().page()
+              let all-headings = query(heading.where(outlined: true))
+              let sections = all-headings.filter(h => h.level == 1)
+              let current-section = sections.filter(h => h.location().page() <= current-page).at(-1, default: none)
+
+              if current-section != none {
+                let idx = all-headings.position(h => h.location() == current-section.location())
+                if idx != none {
+                  let subs = ()
+                  let remaining = if idx + 1 < all-headings.len() { all-headings.slice(idx + 1) } else { () }
+                  for h in remaining {
+                    if h.level <= 1 {
+                      break
+                    }
+                    if h.level == 2 {
+                      subs.push(h.body)
+                    }
+                  }
+                  if subs.len() > 0 {
+                    if subs.len() > 5 {
+                      let mid = calc.ceil(subs.len() / 2)
+                      grid(
+                        columns: (1fr, 1fr),
+                        gutter: 1.5cm,
+                        subs.slice(0, mid).join(linebreak()),
+                        subs.slice(mid).join(linebreak()),
+                      )
+                    } else {
+                      subs.join(linebreak())
+                    }
+                  }
+                }
+              }
+            }
+            if sub-content != none {
+              linebreak()
+              v(0.4cm)
+              text(size: 1.5em, weight: "regular", fill: self.colors.neutral-light)[#sub-content]
+            }
+          }
+        ]
+      ]
+    ]
+  }
+
+  touying-slide(self: self, body(self))
+})
+
 
 #let hsa-theme(
   aspect-ratio: "16-9",
@@ -228,6 +369,7 @@
     ),
     config-common(
       slide-fn: slide,
+      new-section-slide-fn: zwischentitel-slide,
       slide-level: 4,
     ),
     config-colors(
