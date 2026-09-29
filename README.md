@@ -1,5 +1,16 @@
 # Inoffizielle Präsentationsvorlage der Hochschule Anhalt für Typst
+## Setup
+Dieses Repository herunterladen und die `main.typ` Datei anpassen.
 
+## Galerie
+<img width="1684" height="947" alt="main" src="https://github.com/user-attachments/assets/a1a4e14d-c158-4d24-bb49-09f9f6b2253e" />
+
+<img width="1684" height="947" alt="main" src="https://github.com/user-attachments/assets/4cff404d-97fb-4575-b210-9008f588b14a" />
+
+<img width="1684" height="947" alt="main" src="https://github.com/user-attachments/assets/2fd02d6c-d80d-4a4c-b674-99a6c96fa61b" />
+
+
+## Vorschau
 <img width="1684" height="947" alt="seite 01" src="https://github.com/user-attachments/assets/2e79ec73-c6d7-4f0a-a789-71eb2e0cc47c" />
 <img width="1684" height="947" alt="seite 02" src="https://github.com/user-attachments/assets/e85f273c-dcdd-47e6-ac95-3baba5e4bd05" />
 <img width="1684" height="947" alt="seite 03" src="https://github.com/user-attachments/assets/0635c2ba-97c4-4dca-a160-f4469a7a97ce" />
