@@ -1,6 +1,7 @@
 # Inoffizielle Präsentationsvorlage der Hochschule Anhalt für Typst
 ## Setup
 Dieses Repository herunterladen und die `main.typ` Datei anpassen.
+Fehlende Schriftarten wie Montserrat können bei [Google Fonts](https://fonts.google.com/) heruntergeladen und nachinstalliert werden.
 
 ## Galerie
 <img width="1684" height="947" alt="main" src="https://github.com/user-attachments/assets/a1a4e14d-c158-4d24-bb49-09f9f6b2253e" />
