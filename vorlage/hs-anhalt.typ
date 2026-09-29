@@ -1,68 +1,21 @@
 #import "@preview/touying:0.8.0": *
 
+#let header-height = 2.2cm
+
 #let hsa-header(self) = {
-  set align(top)
-  v(0.3cm)
-  show: pad.with(x: 1cm, top: 1cm, bottom: 0cm)
-  set align(horizon)
-  set text(fill: self.colors.primary, size: 12pt, font: "Montserrat")
-  [| #self.store.header]
-  h(1fr)
-  box(image("logo_full.svg", height: 1.5cm), baseline: 50%)
-  linebreak()
-
-  // Breadcrumbs (übergeordnete Kapitel)
-  context {
-    let current-page = here().page()
-    let hs = query(selector(heading))
-    let hs-before = hs.filter(h => h.location().page() <= current-page)
-
-    let slide-headings = hs-before.filter(h => h.level <= self.slide-level)
-    let slide-heading = if slide-headings.len() > 0 { slide-headings.last() } else { none }
-
-    let levels = ()
-    if slide-heading != none {
-      let current-level = slide-heading.level
-      let found-slide-heading = false
-
-      for h in hs-before.rev() {
-        if not found-slide-heading {
-          if h.location() == slide-heading.location() {
-            found-slide-heading = true
-          }
-          continue
-        }
-
-        if h.level < current-level {
-          levels.insert(0, h.body)
-          current-level = h.level
-        }
-        if current-level <= 1 {
-          break
-        }
-      }
-    }
-
-    let breadcrumbs = if levels.len() > 0 {
-      set text(fill: self.colors.neutral.lighten(50%), size: 12pt, weight: "regular")
-      levels.join([ #sym.space #sym.dash.en #sym.space ])
-    } else {
-      hide[A]
-    }
-    v(-0.5cm)
-    breadcrumbs
-    v(-0.8cm)
-    linebreak()
-  }
-
-  set text(fill: self.colors.neutral, size: 25pt, weight: "bold")
-  context {
-    if self.store.title != none {
-      self.store.title
-    } else {
-      utils.display-current-heading(depth: self.slide-level)
-    }
-  }
+  rect(width: 100%, height: 100%, fill: self.colors.neutral-light)[
+    #show: pad.with(left: .8cm, right: .8cm, top: .3cm, bottom: .3cm)
+    #grid(
+      columns: (1fr, auto),
+      rows: 100%,
+      align: (horizon + left, horizon + right),
+      [
+        #set text(fill: self.colors.primary, size: 12pt, font: "Montserrat")
+        | #self.store.header
+      ],
+      image("logo_full.svg", height: 100%),
+    )
+  ]
 }
 
 #let hsa-footer(self) = {
@@ -82,12 +35,66 @@
   )
 }
 
+#let slide-title-block(self, actual-title) = context {
+  let current-page = here().page()
+  let hs = query(selector(heading))
+  let hs-before = hs.filter(h => h.location().page() <= current-page)
+
+  let slide-headings = hs-before.filter(h => h.level <= self.slide-level)
+  let slide-heading = if slide-headings.len() > 0 { slide-headings.last() } else { none }
+
+  let levels = ()
+  if slide-heading != none {
+    let current-level = slide-heading.level
+    let found-slide-heading = false
+
+    for h in hs-before.rev() {
+      if not found-slide-heading {
+        if h.location() == slide-heading.location() {
+          found-slide-heading = true
+        }
+        continue
+      }
+
+      if h.level < current-level {
+        levels.insert(0, h.body)
+        current-level = h.level
+      }
+      if current-level <= 1 {
+        break
+      }
+    }
+  }
+
+  let the-title = if actual-title != auto and actual-title != none {
+    actual-title
+  } else if actual-title == auto and slide-heading != none and slide-heading.level > 1 {
+    utils.display-current-heading(depth: self.slide-level)
+  } else {
+    none
+  }
+
+  if the-title != none {
+    block(width: 100%, below: 0.6em)[
+      #if actual-title == auto and levels.len() > 0 {
+        text(fill: self.colors.neutral.lighten(50%), size: 12pt, weight: "regular")[
+          #levels.join([ #sym.space #sym.dash.en #sym.space ])
+        ]
+        linebreak()
+      }
+      #text(fill: self.colors.neutral, size: 24pt, weight: "bold", font: "Montserrat")[
+        #the-title
+      ]
+    ]
+  }
+}
+
 #let slide(title: auto, ..args) = touying-slide-wrapper(self => {
   let args-named = args.named()
   // Titel extrahieren und im Store speichern, falls vorhanden
-  let actual-title = if title != auto { title } else { args-named.at("title", default: none) }
+  let actual-title = if title != auto { title } else { args-named.at("title", default: auto) }
 
-  if actual-title != none {
+  if actual-title != none and actual-title != auto {
     self.store.title = actual-title
   } else {
     self.store.title = none
@@ -111,7 +118,23 @@
       footer: hsa-footer,
     ),
   )
-  touying-slide(self: self, ..named, ..args.pos())
+
+  let title-content = slide-title-block(self, actual-title)
+  let pos = args.pos()
+  let content = pos.join()
+  let body = pad(top: 0.5cm, bottom: 0.5cm, if title-content != none {
+    grid(
+      columns: 100%,
+      rows: (auto, 1fr),
+      row-gutter: 0.8em,
+      title-content,
+      content,
+    )
+  } else {
+    block(width: 100%, height: 100%, content)
+  })
+
+  touying-slide(self: self, ..named, body)
 })
 
 #let title-slide(
@@ -119,21 +142,6 @@
   extra: none,
   ..args,
 ) = touying-slide-wrapper(self => {
-  // Title Header
-  let title-header(self) = {
-    set align(top)
-    rect(width: 100%, fill: self.colors.neutral-light)[
-      #v(0.3cm)
-      #show: pad.with(left: 1cm, right: 1cm)
-      #set align(horizon)
-      #set text(fill: self.colors.primary, size: 12pt, font: "Montserrat")
-      | #self.store.header
-      #h(1fr)
-      #box(image("logo_full.svg", height: 1.5cm), baseline: 50%)
-      #v(.4cm)
-    ]
-  }
-
   let title-background(self) = {
     rect(
       width: 100%,
@@ -152,7 +160,7 @@
     config-common(freeze-slide-counter: true),
     config-page(
       background: title-background(self),
-      header: title-header(self),
+      header: hsa-header(self),
       footer: none,
     ),
   )
@@ -164,10 +172,10 @@
   }
 
   let body(self) = {
-    pad(top: 1.5cm, bottom: 1cm, left: 1.5cm, right: 1.5cm)[
+    pad(top: 3.5cm, bottom: 1cm, left: 1.5cm, right: 1.5cm)[
       #box(width: 100%, height: 100%)[
         #place(top + left)[
-          #text(size: 2.5em, weight: "bold", fill: self.colors.neutral-light, info.title)
+          #text(size: 2.5em, weight: "bold", fill: self.colors.neutral-light, font: "Montserrat", info.title)
           #if info.subtitle != none {
             linebreak()
             v(0.2cm)
@@ -220,21 +228,6 @@
     }
   }
 
-  // Title Header
-  let title-header(self) = {
-    set align(top)
-    rect(width: 100%, fill: self.colors.neutral-light)[
-      #v(0.3cm)
-      #show: pad.with(left: 1cm, right: 1cm)
-      #set align(horizon)
-      #set text(fill: self.colors.primary, size: 12pt, font: "Montserrat")
-      | #self.store.header
-      #h(1fr)
-      #box(image("logo_full.svg", height: 1.5cm), baseline: 50%)
-      #v(.4cm)
-    ]
-  }
-
   let title-background(self) = {
     rect(
       width: 100%,
@@ -249,7 +242,7 @@
     config-common(freeze-slide-counter: true),
     config-page(
       background: title-background(self),
-      header: title-header(self),
+      header: hsa-header(self),
       footer: none,
     ),
   )
@@ -261,10 +254,10 @@
   }
 
   let body(self) = {
-    pad(top: 1.5cm, bottom: 1cm, left: 1.5cm, right: 1.5cm)[
+    pad(top: 2.5cm, bottom: 1cm, left: 1.5cm, right: 1.5cm)[
       #box(width: 100%, height: 100%)[
         #place(top + left)[
-          #text(size: 2.5em, weight: "bold", fill: self.colors.neutral-light)[
+          #text(size: 2em, weight: "bold", font: "Montserrat", fill: self.colors.neutral-light)[
             #if title != auto {
               title
             } else {
@@ -299,8 +292,7 @@
                       grid(
                         columns: (1fr, 1fr),
                         gutter: 1.5cm,
-                        subs.slice(0, mid).join(linebreak()),
-                        subs.slice(mid).join(linebreak()),
+                        subs.slice(0, mid).join(linebreak()), subs.slice(mid).join(linebreak()),
                       )
                     } else {
                       subs.join(linebreak())
@@ -326,6 +318,7 @@
 
 #let hsa-theme(
   aspect-ratio: "16-9",
+  header-height: header-height,
   header: [Funktion, Fachbereich, Struktureinheit oder Name],
   footer: [Name, Anlass],
   datum: [#datetime.today().display("[day].[month].[year]")],
@@ -333,7 +326,7 @@
   ..args,
   body,
 ) = {
-  set text(size: 18pt, font: "Montserrat", lang: "de")
+  set text(size: 18pt, font: "Source Sans 3", lang: "de")
   show figure.caption: set text(size: 14pt)
   set figure(numbering: none)
 
@@ -352,8 +345,10 @@
   show: touying-slides.with(
     config-page(
       paper: "presentation-" + aspect-ratio,
+      header-ascent: 0%,
+      footer-descent: 0%,
       margin: (
-        top: 3.8cm, // Platz für den Header
+        top: header-height, // Platz für den schlanken Header
         bottom: 1.2cm, // Platz für den Footer
         left: 1cm, // Horizontaler Rand
         right: 1cm, // Horizontaler Rand
